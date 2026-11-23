@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # NEXT_PUBLIC_ values are public by design; stop Netlify's secret scanner from failing the build on them.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

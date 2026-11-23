@@ -1,0 +1,247 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "rhel-openssl-1.0.x"] // "native" for your PC; rhel-* for Netlify's servers
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum Gender {
+  MEN
+  WOMEN
+  UNISEX
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+// All money values are integers in paise.
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  phone        String?
+  passwordHash String
+  role         Role           @default(CUSTOMER)
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  addresses    Address[]
+  wishlist     WishlistItem[]
+  cart         CartItem[]
+  orders       Order[]
+  sessions     Session[]
+  reviews      Review[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  phone     String
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  pincode   String
+  isDefault Boolean @default(false)
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  gender   Gender
+  products Product[]
+}
+
+model Product {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  sku         String         @unique
+  name        String
+  description String
+  gender      Gender
+  categoryId  String
+  category    Category       @relation(fields: [categoryId], references: [id])
+  price       Int
+  salePrice   Int?
+  published   Boolean        @default(false)
+  featured    Boolean        @default(false)
+  popularity  Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  images      ProductImage[]
+  variants    Variant[]
+  wishlist    WishlistItem[]
+  reviews     Review[]
+
+  @@index([gender, published])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String  @default("")
+  position  Int     @default(0)
+}
+
+model Variant {
+  id         String      @id @default(cuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size       String
+  color      String
+  colorHex   String      @default("#000000")
+  stock      Int         @default(0)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@unique([productId, size, color])
+}
+
+model WishlistItem {
+  userId    String
+  productId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId])
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  @@unique([userId, variantId])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  number         String      @unique
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  status         OrderStatus @default(PENDING)
+  subtotal       Int
+  shipping       Int
+  tax            Int
+  total          Int
+  shipName       String
+  shipPhone      String
+  shipLine1      String
+  shipLine2      String?
+  shipCity       String
+  shipState      String
+  shipPincode    String
+  trackingNumber String?
+  idempotencyKey String      @unique
+  createdAt      DateTime    @default(now())
+  items          OrderItem[]
+  payments       Payment[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   Variant @relation(fields: [variantId], references: [id])
+  name      String
+  size      String
+  color     String
+  unitPrice Int
+  quantity  Int
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  orderId          String
+  order            Order         @relation(fields: [orderId], references: [id])
+  gateway          String        @default("upi_qr")
+  gatewayOrderId   String        @unique
+  gatewayPaymentId String?       @unique
+  amount           Int
+  status           PaymentStatus @default(PENDING)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+// Every processed webhook event id is stored so duplicates are ignored.
+model WebhookEvent {
+  id         String   @id
+  type       String
+  receivedAt DateTime @default(now())
+}
+
+model Banner {
+  id       String  @id @default(cuid())
+  title    String
+  subtitle String  @default("")
+  imageUrl String
+  href     String  @default("/")
+  position Int     @default(0)
+  active   Boolean @default(true)
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  title     String   @default("")
+  body      String
+  verified  Boolean  @default(false) // the reviewer bought this product
+  hidden    Boolean  @default(false) // hidden by an admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, userId])
+  @@index([productId, hidden, createdAt])
+}

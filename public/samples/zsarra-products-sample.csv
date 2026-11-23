@@ -1,0 +1,6 @@
+﻿sku,name,description,gender,category,price,sale_price,sizes,colors,stock,published,featured,image_urls
+ZM-201,Pista green textured shirt,Full-sleeve shirt in a textured weave with a button front and a spread collar. Roll the sleeves up for a relaxed look.,men,Shirts,3199,,S|M|L|XL,Pista green:#B9D7A8,10,yes,yes,
+ZM-202,Classic white hoodie,"Pullover hoodie with a drawstring hood, a front pocket and ribbed cuffs and hem.",men,Hoodies,3299,,S|M|L|XL|XXL,White,10,yes,yes,
+ZM-203,Faded blue slim jeans,Slim-fit jeans in a faded blue wash with subtle floral detailing and classic five-pocket styling.,men,Jeans,3399,,28|30|32|34|36,Washed blue:#6E9BC9,10,yes,yes,
+ZW-201,Embroidered yellow kurti,"Long-sleeve kurti with contrast embroidery at the neckline, cuffs and hem, and side slits for easy movement.",women,Kurtis,1899,1499,S|M|L|XL,Mustard:#E0A526,S:6|M:10|L:10|XL:4,yes,yes,
+ZW-202,High-waist seamless leggings,"High-waist leggings with a smooth, stretchy fit and a wide waistband that stays put.",women,Leggings,1599,,XS|S|M|L|XL,Charcoal:#4A4A4E,10,yes,yes,
